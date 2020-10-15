@@ -125,7 +125,7 @@ if (tryThis5)
 end
 
 % Verification of @huffmanForSQ function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tryThis6 = 0;
+tryThis6 = 1;
 if (tryThis6)
     % We try to find the average code word length for each bit level
     bitLevels = [1, 2, 3, 4, 5, 6];
@@ -141,7 +141,7 @@ if (tryThis6)
 end
 
 % Simulating 1-bit scenario for Task 7 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tryThis7 = 1;
+tryThis7 = 0;
 if (tryThis7)
     numberOfBits = 1;
     % Plot the input distribution as a histogram
