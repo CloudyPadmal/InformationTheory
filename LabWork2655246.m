@@ -13,9 +13,11 @@ N = 10e3;                                        % Number of samples
 mu = 0;                                          % Sample mean
 sigma = 1;                                       % Sample variance
 numBits = 8;                                     % Number of bits
+blockLength = 3;                                 % Parallel sequences
 
 % Generating normal random variables of size N with defined mu and sigma
 Xs = normrnd(mu, sigma, [1, N]);                 % Sample data set (input)
+Xn = normrnd(mu, sigma, [N, blockLength]);       % Sample data set (input)
 
 distortion = 0:0.01:2;                           % Range of distortions
 
@@ -99,6 +101,7 @@ end
 
 tryThis5 = 0;
 if (tryThis5)
+    disp('Quantization regions for a 4 bit case ........................');
     numberOfBits = 4;
     % Plot the input distribution as a histogram
     histogram(Xs, 10e2, 'EdgeColor','b');
@@ -125,10 +128,11 @@ if (tryThis5)
 end
 
 % Verification of @huffmanForSQ function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tryThis6 = 1;
+tryThis6 = 0;
 if (tryThis6)
+    disp('Huffman coding for Scalar quantization .......................');
     % We try to find the average code word length for each bit level
-    bitLevels = [1, 2, 3, 4, 5, 6];
+    bitLevels = [1, 2, 3, 4, 5, 6, 7, 8];
     averageCodeLength = zeros(1, length(bitLevels));
     for bit = bitLevels
         [~, Codebook, ~] = optimizedScalarQuantization(Xs, 2^bit);
@@ -143,6 +147,7 @@ end
 % Simulating 1-bit scenario for Task 7 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tryThis7 = 0;
 if (tryThis7)
+    disp('Quantization regions for a 1 bit case ........................');
     numberOfBits = 1;
     % Plot the input distribution as a histogram
     histogram(Xs, 10e2, 'EdgeColor','b');
@@ -166,6 +171,18 @@ if (tryThis7)
     ylabel('Number of samples');
     legend('Sample count', 'Partition', 'Gaussian PDF');
     hold off;
+end
+
+% Verification of @optimizedVectorQuantization function %%%%%%%%%%%%%%%%%%%
+tryThis8 = 1;
+if (tryThis8)
+    disp('Evaluating Vector quantization ...............................');
+    bitLevels = [1, 2, 3, 4, 5, 6, 7, 8];
+    averageCodeLength = zeros(1, length(bitLevels));
+    for bit = bitLevels
+        [idx, ~, ~, ~] = optimizedVectorQuantization(Xn, 2^bit);
+        [~, averageCodeLength(bit)] = huffmanForVQ(idx, size(Xn,1), 2^bit);
+    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -335,6 +352,20 @@ function [Partitions, Codes, Distortion] = optimizedScalarQuantization(...
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Optimized Vector Quantization %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This function supports multidimentional vectors for quantization using K
+% means clustering unlike the scalar counterpart for Lloyd's algorithm.
+function [idx, C, sumd, D] = optimizedVectorQuantization(...
+                                                 trainingSet, codeBookSize)
+    % idx would be the cluster index for each block
+    % C would be the location of each centroid
+    % sumd would be the sum of each point to centroid distances
+    % D would be distance from each point to every centroid
+    [idx, C, sumd, D] = kmeans(trainingSet, codeBookSize, 'MaxIter', 150);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Huffman Coding function for SQ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function calculates the set of Huffman codes using the inbuilt
@@ -344,6 +375,24 @@ function [Codes, AvgCodeLength] = huffmanForSQ(codeBook, trainingSet)
     symbols = zeros(1, length(codeBook));
     for x = 1:length(codeBook)
         tProbMasses(x) = probabilityMass(codeBook, x, trainingSet);
+        symbols(x) = x;
+    end
+    [Codes, AvgCodeLength] = huffmandict(symbols, tProbMasses);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Huffman Coding function for VQ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This function calculates the set of Huffman codes using the inbuilt
+% function for a given set of codebook derived from kmeans algorithm
+function [Codes, AvgCodeLength] = huffmanForVQ(codeBook, totalPoints, lvl)
+    % Estimating the probability mass function would be by counting how
+    % many data points in each cluster and dividing by the total number of
+    % points.
+    tProbMasses = zeros(1, lvl);
+    symbols = zeros(1, lvl);
+    for x = 1:lvl
+        tProbMasses(x) = sum(codeBook == x) / totalPoints;
         symbols(x) = x;
     end
     [Codes, AvgCodeLength] = huffmandict(symbols, tProbMasses);
