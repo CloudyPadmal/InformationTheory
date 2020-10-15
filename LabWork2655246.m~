@@ -125,47 +125,11 @@ if (tryThis5)
 end
 
 % Verification of @huffmanForSQ function %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tryThis6 = 0;
+tryThis6 = 1;
 if (tryThis6)
-    % We try to find the average code word length for each bit level
-    bitLevels = [1, 2, 3, 4, 5, 6];
-    averageCodeLength = zeros(1, length(bitLevels));
-    for bit = bitLevels
-        [~, Codebook, ~] = optimizedScalarQuantization(Xs, 2^bit);
-        [~, averageCodeLength(bit)] = huffmanForSQ(Codebook, Xs);
-    end
-    % For the 4 bit case, the Huffman code book would yield this
     numberOfBits = 4;
     [~, Codebook, ~] = optimizedScalarQuantization(Xs, 2^numberOfBits);
     [HuffmanCodes, AvgCodeLength] = huffmanForSQ(Codebook, Xs);
-end
-
-% Simulating 1-bit scenario for Task 7 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tryThis7 = 1;
-if (tryThis7)
-    numberOfBits = 1;
-    % Plot the input distribution as a histogram
-    histogram(Xs, 10e2, 'EdgeColor','b');
-    hold on;
-    % The bin count to limit the partition slice plot for a better view
-    [sampleCount, ~] = histcounts(Xs, 10e2);
-    % Calculate the partition slices from lloyd algorithm
-    [~, Partitions, ~] = optimizedScalarQuantization(Xs, 2^numberOfBits);
-    % Represent the slices as a set of bar graphs to view it more clearly
-    bar(Partitions, max(sampleCount)*ones(1,length(Partitions)), 0.05, ...
-                                    'EdgeColor','none', 'FaceColor', 'r');
-    hold on;
-    % Plot a normal distribution to show that the data set is a normal dst
-    nrmdst = @(x) exp(-(x).^2 ./ (2)) / (sqrt(2*pi));
-    inputData = min(Xs):0.01:max(Xs);
-    normalDst = nrmdst(inputData);
-    plot(inputData, max(sampleCount)*normalDst/max(normalDst), 'k');
-    title('Distribution of partition structure (1 bit)');
-    xlabel('Sample value');
-    ylim([0 max(sampleCount)]);    
-    ylabel('Number of samples');
-    legend('Sample count', 'Partition', 'Gaussian PDF');
-    hold off;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
